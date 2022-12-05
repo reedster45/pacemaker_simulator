@@ -23,5 +23,5 @@ clean:
 #	cd solutions; make clean
 
 
-pacemaker.o: pacemaker.cpp
-heart.o: heart.cpp
+pacemaker.o: pacemaker.cpp pacemaker.h
+heart.o: heart.cpp pacemaker.h
