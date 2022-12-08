@@ -21,6 +21,7 @@ bool vSense = false, vPace = false, LRI_timeout=false;
 void init_timecycle() {
 	// cleanup
 	timer_delete(LRI_timerid);
+	timer_delete(VRP_timerid);
 
 	// setup LRI timer
 	timer_create(CLOCK_REALTIME, &LRI_event, &LRI_timerid);
@@ -33,11 +34,19 @@ void init_timecycle() {
 	timer_settime(LRI_timerid, 0, &LRI_it, NULL);
 
 	// setup VRP timer
+	timer_create(CLOCK_REALTIME, &VRP_event, &VRP_timerid);
+	VRP_it.it_value.tv_sec = 0;
+	VRP_it.it_value.tv_nsec = 000000001;
+	VRP_it.it_interval.tv_sec = 1;
+	VRP_it.it_interval.tv_nsec = 0;
+	timer_settime(VRP_timerid, 0, &VRP_it, NULL);
 }
 
 
 // handler for a ventricle beat
 void handle_ventricle_event() {
+	// if during VRP period then we ignore ventricular  events
+	if (!VRP_timeout) return;
 	if (LRI_timeout == false) { // within LRI
 		vSense = true;
 		init_timecycle();
@@ -52,6 +61,11 @@ void handle_LRI_timeout() {
 		vPace = true; // pace heart to have ventricle beat
 	}
 	vSense = false;
+}
+
+// handler for VRP timeout
+void handle_VRP_timeout(){
+	VRP_timeout = true;
 }
 
 // send pulse to heart if heart missed a beat
@@ -90,6 +104,10 @@ void heart_sense() {
 			handle_LRI_timeout();
 			cout << "LRI timeout" << endl;
 			break;
+
+		case VRP_TIMEOUT:
+			cout << "VRP timeout" << endl;
+			break;
 		}
 
 	 } else {
@@ -110,7 +128,7 @@ int main() {
 
 	// initialize events
 	SIGEV_PULSE_INIT(&LRI_event, sense_coid, SIGEV_PULSE_PRIO_INHERIT, LRI_TIMEOUT, 0);
-
+	SIGEV_PULSE_INIT(&VRP_event, sense_coid, SIGEV_PULSE_PRIO_INHERIT, VRP_TIMEOUT, 0);
 	// continuously monitor the heart
 	while(1) {
 		heart_sense();

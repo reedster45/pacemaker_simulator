@@ -17,18 +17,6 @@ struct itimerspec atrium_it, ventricle_it;
 
 // initialize heartbeat timers
 void init_heartbeat() {
-	// setup right atrium timer
-//	SIGEV_PULSE_INIT(&atrium_event, coid, SIGEV_PULSE_PRIO_INHERIT, RIGHT_ATRIUM_EVENT, 0);
-//	timer_create(CLOCK_REALTIME, &atrium_event, &atrium_timerid);
-//
-//	atrium_it.it_value.tv_sec = 5;
-//	atrium_it.it_value.tv_nsec = 0;
-//	atrium_it.it_interval.tv_sec = 1;
-//	atrium_it.it_interval.tv_nsec = 500000000;
-//
-//	timer_settime(atrium_timerid, 0, &atrium_it, NULL);
-
-
 	// cleanup
 	timer_delete(ventricle_timerid);
 
