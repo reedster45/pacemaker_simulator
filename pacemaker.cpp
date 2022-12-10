@@ -1,11 +1,11 @@
 
-
+#include <sys/time.h>
 #include "pacemaker.h"
-
 
 // declare variables
 const int LRI=1000, VRP=250;
 int pace_coid, sense_coid, rcvid;
+unsigned long start_time;
 name_attach_t *attach;
 pulse_t heartbeat;
 
@@ -72,6 +72,13 @@ void handle_ventricle_event() {
 	VRP_timeout = false;
 }
 
+//From: https://stackoverflow.com/questions/10192903/time-in-milliseconds-in-c#answer-44896326
+long long curTime(void) {
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return (((long long)tv.tv_sec)*1000)+(tv.tv_usec/1000) - start_time * 1000;
+}
+
 // handler for LRI timeout
 void handle_LRI_timeout() {
 	if (vSense == false && VRP_timeout) { // havent sensed ventricle beat yet
@@ -102,27 +109,28 @@ void heart_sense() {
 		//received a pulse
 		switch (heartbeat.pulse.code) {
 		case _PULSE_CODE_DISCONNECT:
-			cout << "heart is dead." << endl;
+			cout << "heart is dead. t=" << curTime() << "ms"<< endl;
 			break;
 
 		case RIGHT_VENTRICLE_EVENT:
 			handle_ventricle_event();
-			cout << "ventricle beat" << endl;
+			cout << "ventricle beat t=" << curTime() << "ms"<< endl;
 			break;
 
 		case LRI_TIMEOUT:
 			handle_LRI_timeout();
-			cout << "LRI timeout" << endl;
+			cout << "LRI timeout t=" << curTime() << "ms"<< endl;
 			break;
 
 		case VRP_TIMEOUT:
 			VRP_timeout = true;
-			cout << "VRP timeout" << endl;
+			cout << "VRP timeout t=" << curTime() << "ms"<< endl;
 			break;
 		}
 
 	 } else {
 		//establish a connection to the heart
+		start_time = time(NULL);
 		pace_coid = name_open("heart", 0);
 		MsgReply(rcvid, 0, NULL, sizeof(NULL));
 		cout << "connected to heart." << endl;
